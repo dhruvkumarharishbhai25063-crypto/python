@@ -3,6 +3,14 @@ main.py
 -------
 AirSketch3D entry point.
 
+Hand landmark reference (MediaPipe):
+    0  = wrist
+    4  = thumb tip
+    8  = index fingertip
+    12 = middle fingertip
+    16 = ring fingertip
+    20 = pinky fingertip
+
 Controls:
     Index finger only extended   -> draw on the canvas
     Index + middle extended      -> selection mode (pick color/eraser, no drawing)
