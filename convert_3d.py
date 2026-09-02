@@ -1,27 +1,3 @@
-"""
-convert_3d.py (solid-first, tube-fallback)
--------------------------------------------
-Two ways to turn your 2D stroke into a 3D mesh:
-
-1. SOLID EXTRUSION (tried first): treats your stroke as the outline of a
-   flat shape, fills it in, and pushes it straight up into a solid block
-   -- e.g. draw a square, get an actual solid cube/box. This is what you
-   want for clean, simple, closed shapes.
-
-2. TUBE FALLBACK: if the drawing is too tangled/messy for step 1 to turn
-   into a clean solid (self-crossing lines, stray strokes, an open path),
-   we fall back to tracing the literal path as a 3D tube instead of
-   failing outright.
-
-WHY YOUR CUBE LOOKED LIKE A MESSY FLAT SHAPE:
-Hand-tracking sometimes keeps the "draw" gesture active for a split
-second while your hand moves between corners, adding small stray lines
-across the middle of your shape. The old tube-only approach traced
-every one of those stray lines as its own 3D tube. Solid extrusion
-mostly ignores that noise, because it only cares about the OUTER
-boundary of everything you drew, not each individual line segment.
-"""
-
 import cv2
 import numpy as np
 import trimesh
@@ -29,10 +5,7 @@ from shapely.geometry import Polygon, MultiPolygon
 
 
 def points_to_polygon(points, canvas_width, canvas_height, epsilon_ratio=0.002):
-    """
-    Convert an ordered list of (x, y) pixel points into a cleaned-up
-    Shapely polygon (the filled outer boundary of the stroke).
-    """
+   
     if len(points) < 3:
         raise ValueError("Need at least 3 points to form a polygon.")
 
@@ -73,11 +46,6 @@ def points_to_polygon(points, canvas_width, canvas_height, epsilon_ratio=0.002):
 def extrude_polygon(polygon, extrude_height=50.0):
     """Extrude a 2D Shapely polygon into a solid 3D trimesh block."""
     return trimesh.creation.extrude_polygon(polygon, height=extrude_height)
-
-
-# ---------------------------------------------------------------------
-# Tube fallback (same as before) -- used only if solid extrusion fails
-# ---------------------------------------------------------------------
 
 def stroke_to_tube_mesh(points, canvas_height, tube_radius=6.0, z_scale=0.15,
                          smooth_joints=True):
@@ -120,16 +88,9 @@ def stroke_to_tube_mesh(points, canvas_height, tube_radius=6.0, z_scale=0.15,
     return trimesh.util.concatenate(segments)
 
 
-# ---------------------------------------------------------------------
-# Public entry point used by main.py
-# ---------------------------------------------------------------------
-
 def convert_points_to_mesh(points, canvas_width, canvas_height, extrude_height=50.0,
                             tube_radius=6.0):
-    """
-    Try to build a clean SOLID block first. Only fall back to a tube
-    trace if the drawing is too messy/open for that to work.
-    """
+    
     try:
         polygon = points_to_polygon(points, canvas_width, canvas_height)
         mesh = extrude_polygon(polygon, extrude_height=extrude_height)
@@ -141,6 +102,5 @@ def convert_points_to_mesh(points, canvas_width, canvas_height, extrude_height=5
 
 
 def export_mesh(mesh, filepath="airsketch_model.obj"):
-    """Export the mesh to .obj or .stl (format is inferred from the extension)."""
     mesh.export(filepath)
     return filepath
