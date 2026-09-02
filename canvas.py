@@ -1,13 +1,3 @@
-"""
-canvas.py
----------
-Handles the virtual drawing canvas that gets overlaid on the webcam feed:
-- Stores the ordered list of stroke points (the path the user draws).
-- Draws lines onto a transparent-able canvas layer.
-- Renders a color palette + eraser bar at the top of the screen and
-  detects when the fingertip is hovering over one of those buttons.
-"""
-
 import cv2
 import numpy as np
 
@@ -50,7 +40,7 @@ class Canvas:
         self._build_palette_zones()
 
     def _build_palette_zones(self):
-        """Compute clickable x-ranges for each palette button across the top bar."""
+       
         zone_width = self.width // len(self.palette)
         self.palette_zones = []
         for i, (label, color) in enumerate(self.palette):
@@ -59,7 +49,7 @@ class Canvas:
             self.palette_zones.append((label, color, x_start, x_end))
 
     def draw_toolbar(self, frame):
-        """Draw the palette/eraser bar onto the given frame (in place)."""
+    
         for label, color, x_start, x_end in self.palette_zones:
             swatch_color = color if color is not None else (50, 50, 50)
             cv2.rectangle(frame, (x_start, 0), (x_end, self.toolbar_height), swatch_color, -1)
@@ -75,10 +65,7 @@ class Canvas:
         return frame
 
     def check_toolbar_hover(self, x, y):
-        """
-        If (x, y) — the fingertip position — is inside the toolbar area,
-        select that color/eraser and return True. Otherwise return False.
-        """
+       
         if y > self.toolbar_height:
             return False
 
@@ -93,11 +80,7 @@ class Canvas:
         return False
 
     def start_or_continue_stroke(self, x, y):
-        """
-        Called every frame while in 'draw' gesture mode. Draws a line
-        segment from the previous fingertip position to the current one,
-        and records the point in the ordered stroke list.
-        """
+    
         if y <= self.toolbar_height:
             # Don't draw while hovering the toolbar
             self.prev_point = None
@@ -117,14 +100,12 @@ class Canvas:
         self.prev_point = (x, y)
 
     def end_stroke(self):
-        """Call when the drawing gesture stops, to close off the current stroke."""
         if self.stroke_points:
             self.all_strokes.append(self.stroke_points)
             self.stroke_points = []
         self.prev_point = None
 
     def composite(self, frame):
-        """Overlay the drawing layer on top of the live webcam frame."""
         gray = cv2.cvtColor(self.layer, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
         mask_inv = cv2.bitwise_not(mask)
@@ -135,17 +116,12 @@ class Canvas:
         return combined
 
     def clear(self):
-        """Wipe the canvas and all stored stroke data ('c' key)."""
         self.layer = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         self.stroke_points = []
         self.all_strokes = []
         self.prev_point = None
 
     def get_all_points(self):
-        """
-        Return every drawn point across all strokes as one flat ordered list.
-        Used when converting the drawing into a 2D polygon for 3D extrusion.
-        """
         # End any in-progress stroke first so it's included
         if self.stroke_points:
             self.end_stroke()
@@ -156,6 +132,5 @@ class Canvas:
         return flat_points
 
     def save(self, path="drawing.png"):
-        """Save just the drawing layer (not the webcam feed) as a PNG ('s' key)."""
         cv2.imwrite(path, self.layer)
         return path
